@@ -1,103 +1,86 @@
+-- Simple Vape-like UI Library
+local UILib = {}
 
-local UILibrary = {}
+--// Setup ScreenGui
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Name = "CustomUILib"
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+--// Main Window
+local mainFrame = Instance.new("Frame")
+mainFrame.Parent = screenGui
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.Position = UDim2.new(0.05, 0, 0.1, 0)
+mainFrame.Size = UDim2.new(0, 500, 0, 350)
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "CustomUILib"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = PlayerGui
+-- Tab bar on the left
+local tabBar = Instance.new("Frame", mainFrame)
+tabBar.Size = UDim2.new(0, 120, 1, 0)
+tabBar.BackgroundColor3 = Color3.fromRGB(35,35,35)
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 500, 0, 300)
-MainFrame.Position = UDim2.new(0.25, 0, 0.25, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
+local tabList = Instance.new("UIListLayout", tabBar)
+tabList.SortOrder = Enum.SortOrder.LayoutOrder
+tabList.Padding = UDim.new(0,5)
 
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.FillDirection = Enum.FillDirection.Horizontal
-UIListLayout.Parent = MainFrame
+-- Where tab contents go
+local contentFrame = Instance.new("Frame", mainFrame)
+contentFrame.Position = UDim2.new(0,120,0,0)
+contentFrame.Size = UDim2.new(1,-120,1,0)
+contentFrame.BackgroundColor3 = Color3.fromRGB(45,45,45)
 
-local Tabs = {}
+--// Keep track of tabs
+local tabs = {}
 
-function UILibrary:CreateTab(tabName)
-    local Tab = {}
+-- Create Tab
+function UILib:CreateTab(name)
+    local tabButton = Instance.new("TextButton", tabBar)
+    tabButton.Size = UDim2.new(1, -10, 0, 30)
+    tabButton.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    tabButton.TextColor3 = Color3.new(1,1,1)
+    tabButton.Text = name
 
-    local TabButton = Instance.new("TextButton")
-    TabButton.Text = tabName
-    TabButton.Size = UDim2.new(0, 100, 0, 30)
-    TabButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    TabButton.TextColor3 = Color3.new(1,1,1)
-    TabButton.Parent = MainFrame
+    -- content frame for this tab
+    local tabContent = Instance.new("Frame", contentFrame)
+    tabContent.Size = UDim2.new(1, 0, 1, 0)
+    tabContent.Visible = false
+    tabContent.BackgroundTransparency = 1
 
-    local ContentFrame = Instance.new("Frame")
-    ContentFrame.Size = UDim2.new(1, -100, 1, -30)
-    ContentFrame.Position = UDim2.new(0, 100, 0, 30)
-    ContentFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-    ContentFrame.BorderSizePixel = 0
-    ContentFrame.Visible = false
-    ContentFrame.Parent = MainFrame
+    local layout = Instance.new("UIListLayout", tabContent)
+    layout.Padding = UDim.new(0, 5)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
 
-    local UIList = Instance.new("UIListLayout")
-    UIList.Padding = UDim.new(0, 5)
-    UIList.Parent = ContentFrame
+    local tab = {}
+    tab.Frame = tabContent
 
-    Tab.Sections = {}
-    Tab.Frame = ContentFrame
-
-    TabButton.MouseButton1Click:Connect(function()
-        for _,t in pairs(Tabs) do
+    -- Switching logic
+    tabButton.MouseButton1Click:Connect(function()
+        for _,t in pairs(tabs) do
             t.Frame.Visible = false
         end
-        ContentFrame.Visible = true
+        tabContent.Visible = true
     end)
 
-    function Tab:CreateSection(sectionName)
-        local Section = {}
+    -- Add Button function
+    function tab:CreateButton(text, callback)
+        local btn = Instance.new("TextButton", tabContent)
+        btn.Size = UDim2.new(0, 200, 0, 30)
+        btn.BackgroundColor3 = Color3.fromRGB(80,80,80)
+        btn.TextColor3 = Color3.new(1,1,1)
+        btn.Text = text
+        btn.Font = Enum.Font.SciFi
+        btn.TextSize = 18
 
-        local SectionFrame = Instance.new("Frame")
-        SectionFrame.Size = UDim2.new(1, -10, 0, 50)
-        SectionFrame.BackgroundColor3 = Color3.fromRGB(50,50,50)
-        SectionFrame.BorderSizePixel = 0
-        SectionFrame.Parent = ContentFrame
-
-        local UIList2 = Instance.new("UIListLayout")
-        UIList2.Padding = UDim.new(0, 5)
-        UIList2.Parent = SectionFrame
-
-        local Title = Instance.new("TextLabel")
-        Title.Text = sectionName
-        Title.Size = UDim2.new(1, 0, 0, 20)
-        Title.TextColor3 = Color3.new(1,1,1)
-        Title.BackgroundTransparency = 1
-        Title.Parent = SectionFrame
-
-        Section.Frame = SectionFrame
-
-        function Section:CreateButton(btnName, callback)
-            local Btn = Instance.new("TextButton")
-            Btn.Text = btnName
-            Btn.Size = UDim2.new(1, -10, 0, 25)
-            Btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
-            Btn.TextColor3 = Color3.new(1,1,1)
-            Btn.Parent = SectionFrame
-
-            Btn.MouseButton1Click:Connect(function()
-                if callback then
-                    callback()
-                end
-            end)
-        end
-
-        table.insert(Tab.Sections, Section)
-        return Section
+        btn.MouseButton1Click:Connect(function()
+            if callback then
+                callback()
+            end
+        end)
     end
 
-    table.insert(Tabs, Tab)
-    return Tab
+    table.insert(tabs, tab)
+    return tab
 end
 
-return UILibrary
+return UILib
